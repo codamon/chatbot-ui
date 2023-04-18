@@ -1,0 +1,15 @@
+stages:
+  - name: Build chat bot Image
+    steps:
+      - publishImageConfig:
+          dockerfilePath: ./Dockerfile
+          buildContext: .
+          tag: xebnisoftware/chatbot:${CICD_GIT_BRANCH}.${CICD_EXECUTION_SEQUENCE}
+          pushRemote: true
+          registry: index.docker.io
+  - name: Deploy
+    steps:
+      - applyYamlConfig:
+          path: ./deployments/deployment_${CICD_GIT_BRANCH}.yml
+branch:
+  include: [ main ]

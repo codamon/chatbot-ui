@@ -1,0 +1,113 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: chatbot-service
+  namespace: chatbot-production
+spec:
+  selector:
+    app: chatbot
+    branch: ${CICD_GIT_BRANCH}
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 80
+      name: https
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-chatbot-data
+  namespace: chatbot-production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: nfs-client
+  volumeName: pvc-687c989d-e820-4256-b1d5-2b125f6f1b55
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot
+  labels:
+    app: chatbot
+    branch: ${CICD_GIT_BRANCH}
+  namespace: chatbot-production
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: null
+  selector:
+    matchLabels:
+      app: chatbot
+      branch: ${CICD_GIT_BRANCH}
+  template:
+    metadata:
+      labels:
+        app: chatbot
+        branch: ${CICD_GIT_BRANCH}
+    spec:
+      imagePullSecrets:
+        - name: pipeline-docker-registry
+      containers:
+        - env:
+          - name: DB_HOST
+            value: mysql-ha-mysqlha-0.mysql-ha-mysqlha.mysql.svc.cluster.local
+          - name: DB_NAME
+            value: homespec
+          - name: DB_USER
+            value: homespec
+          - name: DB_PASSWORD
+            value: XebniHSroot
+          - name: WP_DEBUG
+            value: 'false'
+          - name: WP_DEBUG_LOG
+            value: 'false'
+          - name: WP_DEBUG_DISPLAY
+            value: 'false'
+          - name: WP_HOME
+            value: https://www.homespec.co.nz
+          - name: WP_SITEURL
+            value: https://www.homespec.co.nz
+          name: chatbot
+          image: xebnisoftware/chatbot:${CICD_GIT_BRANCH}.${CICD_EXECUTION_SEQUENCE}
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            successThreshold: 1
+            tcpSocket:
+              port: 80
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            successThreshold: 2
+            tcpSocket:
+              port: 80
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 80
+              name: http-port
+              protocol: TCP
+          volumeMounts:
+            - name: chatbot-data
+              mountPath: /
+          resources:
+            limits:
+              cpu: "4"
+              memory: 4096M
+            requests:
+              cpu: "0.2"
+              memory: 2048M
+      volumes:
+        - name: chatbot-data
+          persistentVolumeClaim:
+            claimName: pvc-chatbot-data
+      dnsPolicy: ClusterFirst
