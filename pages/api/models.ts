@@ -22,11 +22,16 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (response.status === 401) {
+
+      console.log('-handler-26: 401');
+
       return new Response(response.body, {
         status: 500,
         headers: response.headers,
       });
     } else if (response.status !== 200) {
+
+      console.log('-handler-32: !200');
       console.error(
         `OpenAI API returned an error ${
           response.status
