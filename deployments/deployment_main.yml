@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: chatbot-service
-  namespace: chatbot-production
+  namespace: arrowtown-production
 spec:
   selector:
     app: chatbot
@@ -18,7 +18,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-chatbot-data
-  namespace: chatbot-production
+  namespace: arrowtown-production
 spec:
   accessModes:
     - ReadWriteOnce
@@ -36,7 +36,7 @@ metadata:
   labels:
     app: chatbot
     branch: ${CICD_GIT_BRANCH}
-  namespace: chatbot-production
+  namespace: arrowtown-production
 spec:
   replicas: 1
   strategy:
