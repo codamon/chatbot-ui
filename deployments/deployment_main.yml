@@ -25,9 +25,9 @@ spec:
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 20Gi
+      storage: 10Gi
   storageClassName: nfs-client
-  volumeName: pvc-687c989d-e820-4256-b1d5-2b125f6f1b55
+#  volumeName: pvc-687c989d-e820-4256-b1d5-2b125f6f1b55
 ---
 apiVersion: apps/v1
 kind: Deployment
