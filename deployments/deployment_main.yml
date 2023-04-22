@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chatbot-service
+  name: chatbot-s
   namespace: arrowtown-production
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chatbot-service
+      app: chatbot-s
       branch: ${CICD_GIT_BRANCH}
   template:
     metadata:
       labels:
-        app: chatbot-service
+        app: chatbot-s
         branch: ${CICD_GIT_BRANCH}
     spec:
       containers:
