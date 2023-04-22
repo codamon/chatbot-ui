@@ -41,6 +41,12 @@ spec:
           image: xebnisoftware/chatbot:${CICD_GIT_BRANCH}.${CICD_EXECUTION_SEQUENCE}
           ports:
             - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
         - name: nginx
           image: nginx:stable-alpine
           ports:
