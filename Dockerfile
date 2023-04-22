@@ -22,6 +22,15 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/next.config.js ./next.config.js
 COPY --from=build /app/next-i18next.config.js ./next-i18next.config.js
 
+# 创建一个名为 'next' 的新用户，并设置其主目录
+RUN addgroup -S next && adduser -S next -G next -h /app
+
+# 更改 /app 目录的所有权，以便新用户可以访问它
+RUN chown -R next:next /app
+
+# 切换到新用户
+USER next
+
 # Expose the port the app will run on
 EXPOSE 3000
 
