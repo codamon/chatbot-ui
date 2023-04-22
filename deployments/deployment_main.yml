@@ -27,8 +27,9 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app: chatbot
-    branch: ${CICD_GIT_BRANCH}
+    matchLabels: # 使用 matchLabels 而不是直接使用 app 和 branch
+      app: chatbot
+      branch: ${CICD_GIT_BRANCH}
   template:
     metadata:
       labels:
