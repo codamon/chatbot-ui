@@ -28,12 +28,13 @@ spec:
   replicas: 1
   selector:
     matchLabels: # 使用 matchLabels 而不是直接使用 app 和 branch
-      app: chatbot
+      app: chatbot-service
       branch: ${CICD_GIT_BRANCH}
   template:
     metadata:
       labels:
         app: chatbot-service
+        branch: ${CICD_GIT_BRANCH}
     spec:
       containers:
         - name: app
