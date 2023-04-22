@@ -18,8 +18,9 @@
 
 ---
 
+
+apiVersion: apps/v1
 kind: Deployment
-apiVersion: v1
 metadata:
   name: chatbot-service
   namespace: arrowtown-production
