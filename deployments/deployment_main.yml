@@ -1,3 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: chatbot-s
+  namespace: arrowtown-production
+spec:
+  selector:
+    app: chatbot-s
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 3000
+      name: https
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
