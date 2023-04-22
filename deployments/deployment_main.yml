@@ -1,75 +1,128 @@
-kind: Service
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: chatbot-nginx-config
+#data:
+#  nginx.conf: |
+#    # 将你的 nginx.conf 内容粘贴到这里
+
+---
+
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: chatbot-nginx-htpasswd
+#type: Opaque
+#data:
+#  .htpasswd: <your-htpasswd-base64-encoded>
+
+---
+
+kind: Deployment
 apiVersion: v1
 metadata:
   name: chatbot-service
   namespace: arrowtown-production
 spec:
-  selector:
-    app: chatbot
-    branch: ${CICD_GIT_BRANCH}
-  type: ClusterIP
-  ports:
-    - protocol: TCP
-      port: 443
-      targetPort: 80
-      name: https
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: chatbot
-  labels:
-    app: chatbot
-    branch: ${CICD_GIT_BRANCH}
-  namespace: arrowtown-production
-spec:
   replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate: null
   selector:
-    matchLabels:
-      app: chatbot
-      branch: ${CICD_GIT_BRANCH}
+    app: chatbot
+    branch: ${CICD_GIT_BRANCH}
   template:
     metadata:
       labels:
-        app: chatbot
-        branch: ${CICD_GIT_BRANCH}
+        app: chatbot-service
     spec:
-      imagePullSecrets:
-        - name: pipeline-docker-registry
       containers:
-        - env:
-            - name: DB_HOST
-              value: mysql-ha-mysqlha-0.mysql-ha-mysqlha.mysql.svc.cluster.local
-          name: chatbot
+        - name: app
           image: xebnisoftware/chatbot:${CICD_GIT_BRANCH}.${CICD_EXECUTION_SEQUENCE}
-          livenessProbe:
-            failureThreshold: 3
-            initialDelaySeconds: 30
-            periodSeconds: 5
-            successThreshold: 1
-            tcpSocket:
-              port: 3000
-            timeoutSeconds: 5
-          readinessProbe:
-            failureThreshold: 3
-            initialDelaySeconds: 30
-            periodSeconds: 5
-            successThreshold: 2
-            tcpSocket:
-              port: 80
-            timeoutSeconds: 5
+          ports:
+            - containerPort: 3000
+        - name: nginx
+          image: nginx:stable-alpine
           ports:
             - containerPort: 80
-              name: http-port
-              protocol: TCP
-          resources:
-            limits:
-              cpu: "4"
-              memory: 4096M
-            requests:
-              cpu: "0.2"
-              memory: 2048M
-      dnsPolicy: ClusterFirst
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-htpasswd
+              mountPath: /etc/nginx/.htpasswd
+              subPath: .htpasswd
+#  volumes:
+#    - name: nginx-config
+#      configMap:
+#        name: chatbot-nginx-config
+#    - name: nginx-htpasswd
+#      secret:
+#        secretName: chatbot-nginx-htpasswd
+
+
+
+
+
+#  ports:
+#    - protocol: TCP
+#      port: 443
+#      targetPort: 80
+#      name: https
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: chatbot
+#  labels:
+#    app: chatbot
+#    branch: ${CICD_GIT_BRANCH}
+#  namespace: arrowtown-production
+#spec:
+#  replicas: 1
+#  strategy:
+#    type: RollingUpdate
+#    rollingUpdate: null
+#  selector:
+#    matchLabels:
+#      app: chatbot
+#      branch: ${CICD_GIT_BRANCH}
+#  template:
+#    metadata:
+#      labels:
+#        app: chatbot
+#        branch: ${CICD_GIT_BRANCH}
+#    spec:
+#      imagePullSecrets:
+#        - name: pipeline-docker-registry
+#      containers:
+#        - env:
+#            - name: DB_HOST
+#              value: mysql-ha-mysqlha-0.mysql-ha-mysqlha.mysql.svc.cluster.local
+#          name: chatbot
+#          image: xebnisoftware/chatbot:${CICD_GIT_BRANCH}.${CICD_EXECUTION_SEQUENCE}
+#          livenessProbe:
+#            failureThreshold: 3
+#            initialDelaySeconds: 30
+#            periodSeconds: 5
+#            successThreshold: 1
+#            tcpSocket:
+#              port: 3000
+#            timeoutSeconds: 5
+#          readinessProbe:
+#            failureThreshold: 3
+#            initialDelaySeconds: 30
+#            periodSeconds: 5
+#            successThreshold: 2
+#            tcpSocket:
+#              port: 80
+#            timeoutSeconds: 5
+#          ports:
+#            - containerPort: 80
+#              name: http-port
+#              protocol: TCP
+#          resources:
+#            limits:
+#              cpu: "4"
+#              memory: 4096M
+#            requests:
+#              cpu: "0.2"
+#              memory: 2048M
+#      dnsPolicy: ClusterFirst
