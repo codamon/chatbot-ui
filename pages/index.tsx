@@ -37,6 +37,8 @@ import Head from 'next/head';
 import {useEffect, useRef, useState} from 'react';
 import toast from 'react-hot-toast';
 import {v4 as uuidv4} from 'uuid';
+import { useRouter } from "next/router";
+import apiClient from "@/utils/app/apiClient";
 
 interface HomeProps {
     serverSideApiKeyIsSet: boolean;
@@ -50,6 +52,7 @@ const Home: React.FC<HomeProps> = ({
                                        defaultModelId,
                                    }) => {
     const {t} = useTranslation('chat');
+    const router = useRouter();
 
     // STATE ----------------------------------------------
 
@@ -132,6 +135,8 @@ const Home: React.FC<HomeProps> = ({
             const endpoint = getEndpoint(plugin);
             let body;
 
+            console.log('-handleSend-138:', chatBody);
+
             if (!plugin) {
                 body = JSON.stringify(chatBody);
             } else {
@@ -148,7 +153,16 @@ const Home: React.FC<HomeProps> = ({
 
             // 发送消息请求
             const controller = new AbortController();
-            const response = await fetch(endpoint, {
+            // const response = await fetch(endpoint, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     signal: controller.signal,
+            //     body,
+            // });
+
+            const response = await fetch("http://localhost/api/chat", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,14 +171,8 @@ const Home: React.FC<HomeProps> = ({
                 body,
             });
 
-            console.log('-handleSend-160:', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                signal: controller.signal,
-                body,
-            });
+
+            console.log('-handleSend-163:', response);
 
             // 处理响应
             if (!response.ok) {
@@ -218,10 +226,22 @@ const Home: React.FC<HomeProps> = ({
 
                     const {value, done: doneReading} = await reader.read();
                     done = doneReading;
-                    const chunkValue = decoder.decode(value);
+                    let chunkValue = decoder.decode(value);
 
                     console.log('-handleSend-223:', chunkValue);
 
+
+                    const lines = chunkValue.split('\n');
+                    let realContent = '';
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            // 提取 JSON 字符串并解析
+                            const jsonString = line.substring(6);
+                            const jsonData = JSON.parse(jsonString);
+                            realContent += jsonData.choices[0].delta.content || "";
+                        }
+                    }
+                    chunkValue = realContent;
                     text += chunkValue;
 
                     if (isFirst) {
@@ -417,6 +437,14 @@ const Home: React.FC<HomeProps> = ({
 
         localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
     };
+
+    const onLogout = () => {
+        // 清除access token
+        localStorage.removeItem('access_token');
+
+        // 跳转到登录页面
+        router.push('/login');
+    }
 
     const handleToggleChatbar = () => {
         setShowSidebar(!showSidebar);
@@ -672,6 +700,24 @@ const Home: React.FC<HomeProps> = ({
     // EFFECTS  --------------------------------------------
 
     useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                console.log('-checkAuth-680:');
+                const response = await apiClient.get('/auth/check');
+
+                console.log('-checkAuth-682:', response);
+
+                if (response.status !== 200) {
+                    router.push("/login");
+                }
+            } catch (err) {
+                // setError('Invalid email or password');
+            }
+        };
+        checkAuth();
+    }, [router]);
+
+    useEffect(() => {
         if (currentMessage) {
             handleSend(currentMessage);
             setCurrentMessage(undefined);
@@ -773,7 +819,7 @@ const Home: React.FC<HomeProps> = ({
     return (
         <>
             <Head>
-                <title>Chatbot UI</title>
+                <title>Local Chat</title>
                 <meta name="description" content="ChatGPT but better."/>
                 <meta
                     name="viewport"
@@ -819,6 +865,7 @@ const Home: React.FC<HomeProps> = ({
                                     onImportConversations={handleImportConversations}
                                     onPluginKeyChange={handlePluginKeyChange}
                                     onClearPluginKey={handleClearPluginKey}
+                                    onLogout={onLogout}
                                 />
 
                                 <button
