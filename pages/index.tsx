@@ -39,6 +39,7 @@ import toast from 'react-hot-toast';
 import {v4 as uuidv4} from 'uuid';
 import { useRouter } from "next/router";
 import apiClient from "@/utils/app/apiClient";
+import axios from "axios/index";
 
 interface HomeProps {
     serverSideApiKeyIsSet: boolean;
@@ -130,6 +131,7 @@ const Home: React.FC<HomeProps> = ({
                 messages: updatedConversation.messages,
                 key: apiKey,
                 prompt: updatedConversation.prompt,
+                conversation: updatedConversation,
             };
 
             const endpoint = getEndpoint(plugin);
@@ -162,10 +164,12 @@ const Home: React.FC<HomeProps> = ({
             //     body,
             // });
 
+            const accessToken = localStorage.getItem('access_token');
             const response = await fetch("http://localhost/api/chat", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
                 },
                 signal: controller.signal,
                 body,
@@ -543,31 +547,48 @@ const Home: React.FC<HomeProps> = ({
 
     // CONVERSATION OPERATIONS  --------------------------------------------
 
-    const handleNewConversation = () => {
+    /**
+     * 新建一个对话
+     */
+    const handleNewConversation = async () => {
+        // 获取上一个会话
         const lastConversation = conversations[conversations.length - 1];
 
+        // 请求后端获取一个新的聊天ID
+
+        const response = await apiClient.get('/chat_sessions/create');
+        const newChatSessionId = response.data.data.id;
+
+        console.log('-handleNewConversation-562:', newChatSessionId);
+
+        // 创建新会话对象，设置 ID、名称、空消息数组和模型等属性
         const newConversation: Conversation = {
-            id: uuidv4(),
-            name: `${t('New Conversation')}`,
-            messages: [],
+            id: newChatSessionId, // uuidv4(), // 为新会话生成唯一 ID
+            name: `${t('New Conversation')}`, // 设置新会话的名称
+            messages: [], // 初始化空消息数组
+            // 使用上一个会话的模型作为新会话的模型，如果没有上一个会话，则使用默认模型
             model: lastConversation?.model || {
                 id: OpenAIModels[defaultModelId].id,
                 name: OpenAIModels[defaultModelId].name,
                 maxLength: OpenAIModels[defaultModelId].maxLength,
                 tokenLimit: OpenAIModels[defaultModelId].tokenLimit,
             },
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            folderId: null,
+            prompt: DEFAULT_SYSTEM_PROMPT, // 设置默认系统提示
+            folderId: null, // 初始化文件夹 ID 为空
         };
 
+        // 将新会话添加到会话数组
         const updatedConversations = [...conversations, newConversation];
 
+        // 设置选中的会话为新会话，并更新会话数组
         setSelectedConversation(newConversation);
         setConversations(updatedConversations);
 
+        // 保存新会话和更新后的会话数组
         saveConversation(newConversation);
         saveConversations(updatedConversations);
 
+        // 设置加载状态为 false
         setLoading(false);
     };
 
