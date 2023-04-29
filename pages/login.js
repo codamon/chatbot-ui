@@ -7,16 +7,17 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [remember, setRemember] = useState(false);
 
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/auth/login', { email, password });
+      const response = await apiClient.post('/auth/login', { email, password, remember });
       console.log('-handleSubmit-17:', response);
-      localStorage.setItem('access_token', response.data.access_token);
 
+      localStorage.setItem('access_token', response.data.access_token);
 
       // Redirect to the desired page after successful login
       // 如果登录成功，跳转到首页
@@ -25,6 +26,10 @@ const LoginPage = () => {
       setError('Invalid email or password');
     }
   };
+
+  const onRememberClick = () => {
+    setRemember(!remember);
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
@@ -84,6 +89,7 @@ const LoginPage = () => {
                     name="remember_me"
                     type="checkbox"
                     className="h-4 w-4 bg-blue-500 focus:ring-blue-400 border-gray-300 rounded"
+                    onClick={() => onRememberClick}
                   />
                   <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-800">
                     Remember me

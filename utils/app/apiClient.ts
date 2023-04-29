@@ -37,7 +37,13 @@ apiClient.interceptors.request.use(
 // 响应拦截器：在收到响应之前处理
 apiClient.interceptors.response.use(
     (response: AxiosResponse) => {
-        // 正常响应，直接返回
+        // 正常响应，直接返回(不做任何处理)
+        // 判断一下响应中是否有 token，如果有就直接使用此 token 替换掉本地的 token。你可以根据你的业务需求自己编写更新 token 的逻辑
+        const token = response.headers.authorization;
+        if (token) {
+            // 如果 header 中存在 token，那么触发 refreshToken 方法，替换本地的 token
+            localStorage.setItem('access_token', token);
+        }
         return response;
     },
     async (error: AxiosError) => {
