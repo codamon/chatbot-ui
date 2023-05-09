@@ -344,8 +344,23 @@ const Home: React.FC<HomeProps> = ({
     };
 
     // FETCH MODELS ----------------------------------------------
-
+    /**
+     这个异步方法用于获取models列表。
+     @param {string} key - 用户的OpenAI API密钥。
+     定义一个错误对象，其中包含错误标题、错误代码和错误消息数组。
+     使用 fetch 发送 POST 请求到 '/api/models'，请求头中包含 Content-Type，
+     请求体中包含一个 JSON 字符串，该字符串包含 key 参数。
+     如果响应状态不为 'ok'，尝试从响应中解析 JSON 数据，更新错误对象的属性，
+     并设置模型错误信息。方法在此返回。
+     从响应中解析 JSON 数据。
+     如果解析后的数据为空，设置模型错误信息。方法在此返回。
+     设置获取到的模型数据，并将模型错误信息设置为 null。
+     */
     const fetchModels = async (key: string) => {
+        // todo 暂时屏蔽这个方法，因为只有一个模型，而且api没有准备好
+
+        return;
+
         const error = {
             title: t('Error fetching models.'),
             code: null,
@@ -986,7 +1001,7 @@ export const getServerSideProps: GetServerSideProps = async ({locale}) => {
 
     return {
         props: {
-            serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
+            serverSideApiKeyIsSet: true,
             defaultModelId,
             serverSidePluginKeysSet,
             ...(await serverSideTranslations(locale ?? 'en', [
