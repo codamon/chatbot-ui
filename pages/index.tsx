@@ -165,7 +165,7 @@ const Home: React.FC<HomeProps> = ({
             // });
 
             const accessToken = localStorage.getItem('access_token');
-            const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/chat", {
+            const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/chat", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
