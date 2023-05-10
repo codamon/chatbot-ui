@@ -123,9 +123,11 @@ export const Chat: FC<Props> = memo(
 
     useEffect(() => {
       throttledScrollDown();
-      setCurrentMessage(
-        conversation.messages[conversation.messages.length - 2],
-      );
+      if(conversation.messages?.length > 1){
+        setCurrentMessage(
+            conversation.messages[conversation.messages?.length - 2],
+        );
+      }
     }, [conversation.messages, throttledScrollDown]);
 
     useEffect(() => {
@@ -203,7 +205,7 @@ export const Chat: FC<Props> = memo(
               ref={chatContainerRef}
               onScroll={handleScroll}
             >
-              {conversation.messages.length === 0 ? (
+              {conversation.messages?.length === 0 ? (
                 <>
                   <div className="mx-auto flex w-[350px] flex-col space-y-10 pt-12 sm:w-[600px]">
                     <div className="text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">
@@ -279,7 +281,7 @@ export const Chat: FC<Props> = memo(
                     </div>
                   )}
 
-                  {conversation.messages.map((message, index) => (
+                  {conversation.messages?.map((message, index) => (
                     <ChatMessage
                       key={index}
                       message={message}
@@ -302,7 +304,7 @@ export const Chat: FC<Props> = memo(
               stopConversationRef={stopConversationRef}
               textareaRef={textareaRef}
               messageIsStreaming={messageIsStreaming}
-              conversationIsEmpty={conversation.messages.length === 0}
+              conversationIsEmpty={conversation.messages?.length === 0}
               model={conversation.model}
               prompts={prompts}
               onSend={(message, plugin) => {

@@ -12,7 +12,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
     const { messages, key, model, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;
 
-    const userMessage = messages[messages.length - 1];
+    const userMessage = messages[messages?.length - 1];
 
     const googleRes = await fetch(
       `https://customsearch.googleapis.com/customsearch/v1?key=${

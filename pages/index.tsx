@@ -39,7 +39,9 @@ import toast from 'react-hot-toast';
 import {v4 as uuidv4} from 'uuid';
 import { useRouter } from "next/router";
 import apiClient from "@/utils/app/apiClient";
+import { fetchMessages, fetchConversations, updateConversationName } from "@/pages/api/chat";
 import axios from "axios/index";
+import {an} from "vitest/dist/types-94cfe4b4";
 
 interface HomeProps {
     serverSideApiKeyIsSet: boolean;
@@ -199,7 +201,7 @@ const Home: React.FC<HomeProps> = ({
             if (!plugin) {
                 // 更新会话名称和处理数据流
                 console.log('-handleSend-189:', updatedConversation.messages);
-                if (updatedConversation.messages.length === 1) {
+                if (updatedConversation.messages?.length === 1) {
                     const {content} = message;
                     console.log('-handleSend-191:', content);
                     const customName =
@@ -232,9 +234,6 @@ const Home: React.FC<HomeProps> = ({
                     done = doneReading;
                     let chunkValue = decoder.decode(value);
 
-                    console.log('-handleSend-223:', chunkValue);
-
-
                     const lines = chunkValue.split('\n');
                     let realContent = '';
                     for (const line of lines) {
@@ -250,9 +249,10 @@ const Home: React.FC<HomeProps> = ({
 
                     if (isFirst) {
                         isFirst = false;
+                        // todo chatID 需要实际赋值
                         const updatedMessages: Message[] = [
                             ...updatedConversation.messages,
-                            {role: 'assistant', content: chunkValue},
+                            {role: 'assistant', content: chunkValue, chatID: 0},
                         ];
 
                         updatedConversation = {
@@ -264,7 +264,7 @@ const Home: React.FC<HomeProps> = ({
                     } else {
                         const updatedMessages: Message[] = updatedConversation.messages.map(
                             (message, index) => {
-                                if (index === updatedConversation.messages.length - 1) {
+                                if (index === updatedConversation.messages?.length - 1) {
                                     return {
                                         ...message,
                                         content: text,
@@ -307,9 +307,10 @@ const Home: React.FC<HomeProps> = ({
             } else {
                 const {answer} = await response.json();
 
+                // todo chatID 需要实际赋值
                 const updatedMessages: Message[] = [
                     ...updatedConversation.messages,
-                    {role: 'assistant', content: answer},
+                    {role: 'assistant', content: answer, chatID: 0},
                 ];
 
                 updatedConversation = {
@@ -492,9 +493,86 @@ const Home: React.FC<HomeProps> = ({
         setPrompts(prompts);
     };
 
-    const handleSelectConversation = (conversation: Conversation) => {
+    /**
+     * 选择对话
+     * @param conversation
+     */
+    const handleSelectConversation = async (conversation: Conversation) => {
+
+        let updatedConversation: Conversation;
+
+        console.log('-handleSelectConversation-501:', conversation);
+        // console.log('-handleSelectConversation-503:');
         setSelectedConversation(conversation);
         saveConversation(conversation);
+
+        // 本地聊天记录格式：
+        // 0:{role: 'user', content: '这个可以吗？'}
+        // 1:{role: 'assistant', content: '我不知道你在说什么，请提供更多的背景信息。'}
+        // 2:{role: 'user', content: '再测试一下'}
+        // 3:{role: 'assistant', content: '好的，请问您需要我测试什么？'}
+        // 4:{role: 'user', content: '给我一个js的登录界面'}
+
+        // 远程聊天记录
+        // {
+        //     "status": "success",
+        //     "data": {
+        //     "messages": [
+        //         {
+        //             "id": 54,
+        //             "chat_session_id": 6,
+        //             "content": "\u8fd9\u4e2a\u53ef\u4ee5\u5417\uff1f",
+        //             "role": "user",
+        //             "created_at": "2023-05-08T14:01:55.000000Z",
+        //             "updated_at": "2023-05-08T14:01:55.000000Z"
+        //         },
+        //         {
+        //             "id": 55,
+        //             "chat_session_id": 6,
+        //             "content": "\u6211\u4e0d\u77e5\u9053\u4f60\u5728\u8bf4\u4ec0\u4e48\uff0c\u8bf7\u63d0\u4f9b\u66f4\u591a\u7684\u80cc\u666f\u4fe1\u606f\u3002",
+        //             "role": "assistant",
+        //             "created_at": "2023-05-08T14:01:58.000000Z",
+        //             "updated_at": "2023-05-08T14:01:58.000000Z"
+        //         }
+        //     ]
+        // }
+        // }
+
+        console.log('-handleSelectConversation-538:');
+
+        // const messages: Array<any> = await fetchMessages(conversation.id);
+
+        // console.log('-handleSelectConversation-542:', messages);
+
+        // if(messages?.length > 0) {
+        //     const formattedMessages: Message[] = messages.map((message) => ({
+        //         role: message.role,
+        //         content: message.content,
+        //         chatID: message.id,
+        //     }));
+        //
+        //     const updatedMessages: Message[] = [
+        //         ...conversation.messages,
+        //         ...formattedMessages,
+        //     ];
+        //
+        //     updatedConversation = {
+        //         ...conversation,
+        //         messages: updatedMessages,
+        //     };
+        //
+        //     setSelectedConversation(updatedConversation);
+        //     saveConversation(updatedConversation);
+        //
+        //     console.log('-handleSelectConversation-544:', formattedMessages);
+        // }
+
+
+        // todo 从api获取对话详情
+        // 如果本地没有聊天记录，就从api获取
+        // fetchConversation(conversation.id);
+        // 获取对话详情后，更新chat.js对话页面。
+        // 要覆盖掉原来的对话，如果条数相同，则不刷新界面。
     };
 
     // FOLDER OPERATIONS  --------------------------------------------
@@ -574,8 +652,6 @@ const Home: React.FC<HomeProps> = ({
         const response = await apiClient.get('/chat_sessions/create');
         const newChatSessionId = response.data.data.id;
 
-        console.log('-handleNewConversation-562:', newChatSessionId);
-
         // 创建新会话对象，设置 ID、名称、空消息数组和模型等属性
         const newConversation: Conversation = {
             id: newChatSessionId, // uuidv4(), // 为新会话生成唯一 ID
@@ -632,14 +708,21 @@ const Home: React.FC<HomeProps> = ({
         }
     };
 
-    const handleUpdateConversation = (
+    const handleUpdateConversation = async (
         conversation: Conversation,
         data: KeyValuePair,
     ) => {
+        console.log('-handleUpdateConversation-715:', conversation);
+        console.log('-handleUpdateConversation-716:', data);
+
         const updatedConversation = {
             ...conversation,
             [data.key]: data.value,
         };
+
+        // 更新对话, 不做验证
+        await updateConversationName(updatedConversation.id, updatedConversation.name, JSON.stringify(updatedConversation.model), updatedConversation.prompt);
+
 
         const {single, all} = updateConversation(
             updatedConversation,
@@ -738,9 +821,7 @@ const Home: React.FC<HomeProps> = ({
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                console.log('-checkAuth-680:');
                 const response = await apiClient.get('/auth/check');
-
                 console.log('-checkAuth-682:', response);
 
                 if (response.status !== 200) {
@@ -822,6 +903,58 @@ const Home: React.FC<HomeProps> = ({
             setPrompts(JSON.parse(prompts));
         }
 
+        // 读取历史会话
+        // todo 读取远程历史会话
+
+        async function fetchRemoteConversations() {
+            const conversations: Array<any> = await fetchConversations();
+
+            // id: string;
+            // name: string;
+            // messages: Message[];
+            // model: OpenAIModel;
+            // prompt: string;
+            // folderId: string | null;
+
+                const formattedMessages: Conversation[] = conversations.map((conversation) : Conversation => ({
+                id: conversation.id + '',
+                name: conversation.session_name || 'Unnamed Session',
+                messages: [], // 需要填充消息数组的逻辑
+                model: {id: 'gpt-3.5-turbo', name: 'GPT-3.5', maxLength: 12000, tokenLimit: 4000}, // 需要填充模型对象的逻辑
+                prompt: 'You are ChatGPT, a large language model trained by…s instructions carefully. Respond using markdown.',
+                folderId: null,
+            }));
+
+            setConversations(formattedMessages);
+        }
+
+        fetchRemoteConversations();
+
+        // console.log('-handleSelectConversation-542:', messages);
+
+        // if(messages?.length > 0) {
+        //     const formattedMessages: Message[] = messages.map((message) => ({
+        //         role: message.role,
+        //         content: message.content,
+        //         chatID: message.id,
+        //     }));
+        //
+        //     const updatedMessages: Message[] = [
+        //         ...conversation.messages,
+        //         ...formattedMessages,
+        //     ];
+        //
+        //     updatedConversation = {
+        //         ...conversation,
+        //         messages: updatedMessages,
+        //     };
+        //
+        //     setSelectedConversation(updatedConversation);
+        //     saveConversation(updatedConversation);
+        //
+        //     console.log('-handleSelectConversation-544:', formattedMessages);
+        // }
+
         const conversationHistory = localStorage.getItem('conversationHistory');
         if (conversationHistory) {
             const parsedConversationHistory: Conversation[] =
@@ -829,9 +962,11 @@ const Home: React.FC<HomeProps> = ({
             const cleanedConversationHistory = cleanConversationHistory(
                 parsedConversationHistory,
             );
+            console.log('--942:', cleanedConversationHistory);
             setConversations(cleanedConversationHistory);
         }
 
+        // 读取已选中的会话，如果没有已选中，则不选中任何会话
         const selectedConversation = localStorage.getItem('selectedConversation');
         if (selectedConversation) {
             const parsedSelectedConversation: Conversation =
