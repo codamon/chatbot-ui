@@ -90,7 +90,7 @@ export const ChatInput: FC<Props> = ({
       return;
     }
 
-    onSend({ role: 'user', content }, plugin);
+    onSend({ role: 'user', content, chatID:0 }, plugin);
     setContent('');
     setPlugin(null);
 

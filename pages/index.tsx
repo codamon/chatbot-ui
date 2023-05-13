@@ -37,9 +37,14 @@ import Head from 'next/head';
 import {useEffect, useRef, useState} from 'react';
 import toast from 'react-hot-toast';
 import {v4 as uuidv4} from 'uuid';
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 import apiClient from "@/utils/app/apiClient";
-import { fetchMessages, fetchConversations, updateConversationName } from "@/pages/api/chat";
+import {
+    fetchMessages,
+    fetchConversations,
+    updateConversationName,
+    createConversation, deleteConversation, clearAllConversations
+} from "@/pages/api/chat";
 import axios from "axios/index";
 import {an} from "vitest/dist/types-94cfe4b4";
 
@@ -104,6 +109,7 @@ const Home: React.FC<HomeProps> = ({
         plugin: Plugin | null = null // 可选插件
     ) => {
         if (selectedConversation) { // 如果选中了会话
+            console.log('-handleSend-108:', selectedConversation);
             // 更新会话逻辑
             let updatedConversation: Conversation;
 
@@ -157,15 +163,6 @@ const Home: React.FC<HomeProps> = ({
 
             // 发送消息请求
             const controller = new AbortController();
-            // const response = await fetch(endpoint, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     signal: controller.signal,
-            //     body,
-            // });
-
             const accessToken = localStorage.getItem('access_token');
             const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/chat", {
                 method: 'POST',
@@ -243,6 +240,18 @@ const Home: React.FC<HomeProps> = ({
                             const jsonData = JSON.parse(jsonString);
                             realContent += jsonData.choices[0].delta.content || "";
                         }
+                        if (line.startsWith('conversation: ')) {
+
+                            // 提取 JSON 字符串并解析
+                            const jsonString = line.substring(14);
+                            const jsonData = JSON.parse(jsonString);
+                            console.log('-handleSend-257:', jsonData);
+                            updatedConversation = {
+                                ...updatedConversation,
+                                ...jsonData,
+                            };
+                            console.log('-handleSend-254:', updatedConversation);
+                        }
                     }
                     chunkValue = realContent;
                     text += chunkValue;
@@ -305,6 +314,8 @@ const Home: React.FC<HomeProps> = ({
 
                 setMessageIsStreaming(false);
             } else {
+
+                console.log('-handleSend-311 else:',);
                 const {answer} = await response.json();
 
                 // todo chatID 需要实际赋值
@@ -500,72 +511,42 @@ const Home: React.FC<HomeProps> = ({
     const handleSelectConversation = async (conversation: Conversation) => {
 
         let updatedConversation: Conversation;
+        setLoading(false);
+
+        // 防止重复点击
+        if (selectedConversation && conversation.id === selectedConversation.id) {
+            return;
+        }
 
         console.log('-handleSelectConversation-501:', conversation);
         // console.log('-handleSelectConversation-503:');
         setSelectedConversation(conversation);
         saveConversation(conversation);
 
-        // 本地聊天记录格式：
-        // 0:{role: 'user', content: '这个可以吗？'}
-        // 1:{role: 'assistant', content: '我不知道你在说什么，请提供更多的背景信息。'}
-        // 2:{role: 'user', content: '再测试一下'}
-        // 3:{role: 'assistant', content: '好的，请问您需要我测试什么？'}
-        // 4:{role: 'user', content: '给我一个js的登录界面'}
+        const messages: Array<any> = await fetchMessages(conversation.id);
 
-        // 远程聊天记录
-        // {
-        //     "status": "success",
-        //     "data": {
-        //     "messages": [
-        //         {
-        //             "id": 54,
-        //             "chat_session_id": 6,
-        //             "content": "\u8fd9\u4e2a\u53ef\u4ee5\u5417\uff1f",
-        //             "role": "user",
-        //             "created_at": "2023-05-08T14:01:55.000000Z",
-        //             "updated_at": "2023-05-08T14:01:55.000000Z"
-        //         },
-        //         {
-        //             "id": 55,
-        //             "chat_session_id": 6,
-        //             "content": "\u6211\u4e0d\u77e5\u9053\u4f60\u5728\u8bf4\u4ec0\u4e48\uff0c\u8bf7\u63d0\u4f9b\u66f4\u591a\u7684\u80cc\u666f\u4fe1\u606f\u3002",
-        //             "role": "assistant",
-        //             "created_at": "2023-05-08T14:01:58.000000Z",
-        //             "updated_at": "2023-05-08T14:01:58.000000Z"
-        //         }
-        //     ]
-        // }
-        // }
+        if (messages?.length > 0) {
+            const formattedMessages: Message[] = messages.map((message) => ({
+                role: message.role,
+                content: message.content,
+                chatID: message.id,
+            }));
 
-        console.log('-handleSelectConversation-538:');
+            const updatedMessages: Message[] = [
+                ...conversation.messages,
+                ...formattedMessages,
+            ];
 
-        // const messages: Array<any> = await fetchMessages(conversation.id);
+            updatedConversation = {
+                ...conversation,
+                messages: updatedMessages,
+            };
 
-        // console.log('-handleSelectConversation-542:', messages);
+            setSelectedConversation(updatedConversation);
+            saveConversation(updatedConversation);
+        }
 
-        // if(messages?.length > 0) {
-        //     const formattedMessages: Message[] = messages.map((message) => ({
-        //         role: message.role,
-        //         content: message.content,
-        //         chatID: message.id,
-        //     }));
-        //
-        //     const updatedMessages: Message[] = [
-        //         ...conversation.messages,
-        //         ...formattedMessages,
-        //     ];
-        //
-        //     updatedConversation = {
-        //         ...conversation,
-        //         messages: updatedMessages,
-        //     };
-        //
-        //     setSelectedConversation(updatedConversation);
-        //     saveConversation(updatedConversation);
-        //
-        //     console.log('-handleSelectConversation-544:', formattedMessages);
-        // }
+        setLoading(false);
 
 
         // todo 从api获取对话详情
@@ -644,18 +625,22 @@ const Home: React.FC<HomeProps> = ({
      * 新建一个对话
      */
     const handleNewConversation = async () => {
+        const model = {
+            id: OpenAIModels[defaultModelId].id,
+            name: OpenAIModels[defaultModelId].name,
+            maxLength: OpenAIModels[defaultModelId].maxLength,
+            tokenLimit: OpenAIModels[defaultModelId].tokenLimit,
+        }
+
+        const conversation = await createConversation('New Conversation', JSON.stringify(model), DEFAULT_SYSTEM_PROMPT );
+
         // 获取上一个会话
         const lastConversation = conversations[conversations.length - 1];
 
-        // 请求后端获取一个新的聊天ID
-
-        const response = await apiClient.get('/chat_sessions/create');
-        const newChatSessionId = response.data.data.id;
-
         // 创建新会话对象，设置 ID、名称、空消息数组和模型等属性
         const newConversation: Conversation = {
-            id: newChatSessionId, // uuidv4(), // 为新会话生成唯一 ID
-            name: `${t('New Conversation')}`, // 设置新会话的名称
+            id: conversation.id, // uuidv4(), // 为新会话生成唯一 ID
+            name: conversation.name, // 设置新会话的名称
             messages: [], // 初始化空消息数组
             // 使用上一个会话的模型作为新会话的模型，如果没有上一个会话，则使用默认模型
             model: lastConversation?.model || {
@@ -683,7 +668,13 @@ const Home: React.FC<HomeProps> = ({
         setLoading(false);
     };
 
-    const handleDeleteConversation = (conversation: Conversation) => {
+    const handleDeleteConversation = async (conversation: Conversation) => {
+
+        const response = await deleteConversation(conversation.id);
+        if(response.data.status !== 'success') {
+            return;
+        }
+
         const updatedConversations = conversations.filter(
             (c) => c.id !== conversation.id,
         );
@@ -697,7 +688,7 @@ const Home: React.FC<HomeProps> = ({
             saveConversation(updatedConversations[updatedConversations.length - 1]);
         } else {
             setSelectedConversation({
-                id: uuidv4(),
+                id: -1,
                 name: 'New conversation',
                 messages: [],
                 model: OpenAIModels[defaultModelId],
@@ -712,33 +703,40 @@ const Home: React.FC<HomeProps> = ({
         conversation: Conversation,
         data: KeyValuePair,
     ) => {
-        console.log('-handleUpdateConversation-715:', conversation);
-        console.log('-handleUpdateConversation-716:', data);
+        // console.log('-handleUpdateConversation-715:', conversation);
+        // console.log('-handleUpdateConversation-716:', data);
 
         const updatedConversation = {
             ...conversation,
             [data.key]: data.value,
         };
 
-        // 更新对话, 不做验证
-        await updateConversationName(updatedConversation.id, updatedConversation.name, JSON.stringify(updatedConversation.model), updatedConversation.prompt);
-
-
         const {single, all} = updateConversation(
             updatedConversation,
             conversations,
         );
 
-        setSelectedConversation(single);
+        // setSelectedConversation(single);
         setConversations(all);
+
+        // 更新对话, 不做验证
+        await updateConversationName(updatedConversation.id, updatedConversation.name, JSON.stringify(updatedConversation.model), updatedConversation.prompt);
     };
 
-    const handleClearConversations = () => {
+    const handleClearConversations = async () => {
+
+        // 清空所有会话
+        const status = await clearAllConversations();
+
+        if(status !== 'success') {
+            return;
+        }
+
         setConversations([]);
         localStorage.removeItem('conversationHistory');
 
         setSelectedConversation({
-            id: uuidv4(),
+            id: -1,
             name: 'New conversation',
             messages: [],
             model: OpenAIModels[defaultModelId],
@@ -819,6 +817,7 @@ const Home: React.FC<HomeProps> = ({
     // EFFECTS  --------------------------------------------
 
     useEffect(() => {
+        console.log('--835:');
         const checkAuth = async () => {
             try {
                 const response = await apiClient.get('/auth/check');
@@ -856,6 +855,7 @@ const Home: React.FC<HomeProps> = ({
     // ON LOAD --------------------------------------------
 
     useEffect(() => {
+        console.log('--872: useEffects', serverSideApiKeyIsSet);
         const theme = localStorage.getItem('theme');
         if (theme) {
             setLightMode(theme as 'dark' | 'light');
@@ -909,18 +909,16 @@ const Home: React.FC<HomeProps> = ({
         async function fetchRemoteConversations() {
             const conversations: Array<any> = await fetchConversations();
 
-            // id: string;
-            // name: string;
-            // messages: Message[];
-            // model: OpenAIModel;
-            // prompt: string;
-            // folderId: string | null;
-
-                const formattedMessages: Conversation[] = conversations.map((conversation) : Conversation => ({
-                id: conversation.id + '',
-                name: conversation.session_name || 'Unnamed Session',
+            const formattedMessages: Conversation[] = conversations.map((conversation): Conversation => ({
+                id: conversation.id,
+                name: conversation.name || 'Unnamed Session',
                 messages: [], // 需要填充消息数组的逻辑
-                model: {id: 'gpt-3.5-turbo', name: 'GPT-3.5', maxLength: 12000, tokenLimit: 4000}, // 需要填充模型对象的逻辑
+                model: {
+                    id: 'gpt-3.5-turbo',
+                    name: 'GPT-3.5',
+                    maxLength: 12000,
+                    tokenLimit: 4000
+                }, // 需要填充模型对象的逻辑
                 prompt: 'You are ChatGPT, a large language model trained by…s instructions carefully. Respond using markdown.',
                 folderId: null,
             }));
@@ -929,31 +927,6 @@ const Home: React.FC<HomeProps> = ({
         }
 
         fetchRemoteConversations();
-
-        // console.log('-handleSelectConversation-542:', messages);
-
-        // if(messages?.length > 0) {
-        //     const formattedMessages: Message[] = messages.map((message) => ({
-        //         role: message.role,
-        //         content: message.content,
-        //         chatID: message.id,
-        //     }));
-        //
-        //     const updatedMessages: Message[] = [
-        //         ...conversation.messages,
-        //         ...formattedMessages,
-        //     ];
-        //
-        //     updatedConversation = {
-        //         ...conversation,
-        //         messages: updatedMessages,
-        //     };
-        //
-        //     setSelectedConversation(updatedConversation);
-        //     saveConversation(updatedConversation);
-        //
-        //     console.log('-handleSelectConversation-544:', formattedMessages);
-        // }
 
         const conversationHistory = localStorage.getItem('conversationHistory');
         if (conversationHistory) {
@@ -968,7 +941,9 @@ const Home: React.FC<HomeProps> = ({
 
         // 读取已选中的会话，如果没有已选中，则不选中任何会话
         const selectedConversation = localStorage.getItem('selectedConversation');
+        console.log('fetchRemoteConversations--979:', selectedConversation);
         if (selectedConversation) {
+            console.log('--981:');
             const parsedSelectedConversation: Conversation =
                 JSON.parse(selectedConversation);
             const cleanedSelectedConversation = cleanSelectedConversation(
@@ -977,7 +952,7 @@ const Home: React.FC<HomeProps> = ({
             setSelectedConversation(cleanedSelectedConversation);
         } else {
             setSelectedConversation({
-                id: uuidv4(),
+                id: -1,
                 name: 'New conversation',
                 messages: [],
                 model: OpenAIModels[defaultModelId],
@@ -1077,37 +1052,37 @@ const Home: React.FC<HomeProps> = ({
                             />
                         </div>
 
-                        {showPromptbar ? (
-                            <div>
-                                <Promptbar
-                                    prompts={prompts}
-                                    folders={folders.filter((folder) => folder.type === 'prompt')}
-                                    onCreatePrompt={handleCreatePrompt}
-                                    onUpdatePrompt={handleUpdatePrompt}
-                                    onDeletePrompt={handleDeletePrompt}
-                                    onCreateFolder={(name) => handleCreateFolder(name, 'prompt')}
-                                    onDeleteFolder={handleDeleteFolder}
-                                    onUpdateFolder={handleUpdateFolder}
-                                />
-                                <button
-                                    className="fixed top-5 right-[270px] z-50 h-7 w-7 hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-[270px] sm:h-8 sm:w-8 sm:text-neutral-700"
-                                    onClick={handleTogglePromptbar}
-                                >
-                                    <IconArrowBarRight/>
-                                </button>
-                                <div
-                                    onClick={handleTogglePromptbar}
-                                    className="absolute top-0 left-0 z-10 h-full w-full bg-black opacity-70 sm:hidden"
-                                ></div>
-                            </div>
-                        ) : (
-                            <button
-                                className="fixed top-2.5 right-4 z-50 h-7 w-7 text-white hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-4 sm:h-8 sm:w-8 sm:text-neutral-700"
-                                onClick={handleTogglePromptbar}
-                            >
-                                <IconArrowBarLeft/>
-                            </button>
-                        )}
+                        {/*{showPromptbar ? (*/}
+                        {/*    <div>*/}
+                        {/*        <Promptbar*/}
+                        {/*            prompts={prompts}*/}
+                        {/*            folders={folders.filter((folder) => folder.type === 'prompt')}*/}
+                        {/*            onCreatePrompt={handleCreatePrompt}*/}
+                        {/*            onUpdatePrompt={handleUpdatePrompt}*/}
+                        {/*            onDeletePrompt={handleDeletePrompt}*/}
+                        {/*            onCreateFolder={(name) => handleCreateFolder(name, 'prompt')}*/}
+                        {/*            onDeleteFolder={handleDeleteFolder}*/}
+                        {/*            onUpdateFolder={handleUpdateFolder}*/}
+                        {/*        />*/}
+                        {/*        <button*/}
+                        {/*            className="fixed top-5 right-[270px] z-50 h-7 w-7 hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-[270px] sm:h-8 sm:w-8 sm:text-neutral-700"*/}
+                        {/*            onClick={handleTogglePromptbar}*/}
+                        {/*        >*/}
+                        {/*            <IconArrowBarRight/>*/}
+                        {/*        </button>*/}
+                        {/*        <div*/}
+                        {/*            onClick={handleTogglePromptbar}*/}
+                        {/*            className="absolute top-0 left-0 z-10 h-full w-full bg-black opacity-70 sm:hidden"*/}
+                        {/*        ></div>*/}
+                        {/*    </div>*/}
+                        {/*) : (*/}
+                        {/*    <button*/}
+                        {/*        className="fixed top-2.5 right-4 z-50 h-7 w-7 text-white hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-4 sm:h-8 sm:w-8 sm:text-neutral-700"*/}
+                        {/*        onClick={handleTogglePromptbar}*/}
+                        {/*    >*/}
+                        {/*        <IconArrowBarLeft/>*/}
+                        {/*    </button>*/}
+                        {/*)}*/}
                     </div>
                 </main>
             )}
@@ -1125,7 +1100,7 @@ export const getServerSideProps: GetServerSideProps = async ({locale}) => {
             process.env.DEFAULT_MODEL) ||
         fallbackModelID;
 
-    let serverSidePluginKeysSet = false;
+    let serverSidePluginKeysSet = true;
 
     const googleApiKey = process.env.GOOGLE_API_KEY;
     const googleCSEId = process.env.GOOGLE_CSE_ID;

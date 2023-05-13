@@ -53,7 +53,7 @@ export const ChatbarSettings: FC<Props> = ({
                     onClearConversations={onClearConversations}/>
             ) : null}
 
-            <Import onImport={onImportConversations}/>
+            {/*<Import onImport={onImportConversations}/>*/}
 
             <SidebarButton
                 text={t('Export data')}

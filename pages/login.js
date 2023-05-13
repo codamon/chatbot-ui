@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import apiClient from "../utils/app/apiClient";
 import { AxiosResponse } from "axios";
+import { loginWithEmail } from "./api/login";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -14,10 +15,8 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/auth/login', { email, password, remember });
-      console.log('-handleSubmit-17:', response);
-
-      localStorage.setItem('access_token', response.data.access_token);
+      const response = await loginWithEmail(email, password, remember);
+      // localStorage.setItem('access_token', response.data.access_token);
 
       // Redirect to the desired page after successful login
       // 如果登录成功，跳转到首页
@@ -32,9 +31,11 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+    <div
+      className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
+        <div
+          className="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
           <div className="max-w-md mx-auto">
             <div className="flex items-center space-x-5">
               <svg
@@ -44,17 +45,21 @@ const LoginPage = () => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M12 22v-4m6-10h-1a5 5 0 0 0-5-5V2a10 10 0 0 1 10 10h-4z" />
+                <path
+                  d="M12 22v-4m6-10h-1a5 5 0 0 0-5-5V2a10 10 0 0 1 10 10h-4z"/>
               </svg>
-              <div className="text-center text-2xl font-semibold text-gray-900">Login</div>
+              <div
+                className="text-center text-2xl font-semibold text-gray-900">Login
+              </div>
             </div>
             {error && (
               <div className="text-red-500 py-2">{error}</div>
             )}
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-              <input type="hidden" name="remember" value="true" />
+              <input type="hidden" name="remember" value="true"/>
               <div className="relative">
-                <label htmlFor="email" className="text-sm font-semibold text-gray-500">
+                <label htmlFor="email"
+                       className="text-sm font-semibold text-gray-500">
                   Email
                 </label>
                 <input
@@ -68,7 +73,8 @@ const LoginPage = () => {
                 />
               </div>
               <div className="relative">
-                <label htmlFor="password" className="text-sm font-semibold text-gray-500">
+                <label htmlFor="password"
+                       className="text-sm font-semibold text-gray-500">
                   Password
                 </label>
                 <input

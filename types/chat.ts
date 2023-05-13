@@ -3,7 +3,7 @@ import { OpenAIModel } from './openai';
 export interface Message {
   role: Role;
   content: string;
-  chatID: Number;
+  chatID?: Number;
 }
 
 export type Role = 'assistant' | 'user';
@@ -17,7 +17,7 @@ export interface ChatBody {
 }
 
 export interface Conversation {
-  id: string;
+  id: Number;
   name: string;
   messages: Message[];
   model: OpenAIModel;

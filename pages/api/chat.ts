@@ -62,9 +62,18 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 /**
+ * 新建聊天会话
+ */
+export const createConversation = async (name: String, model: String, prompt: String) => {
+    console.log('-createConversation-68:');
+    const response = await apiClient.post('/chat_conversations/create', {name, model, prompt});
+    return response.data.data.conversation;
+}
+
+/**
  * 获取聊天记录通过相应的ID
  */
-export const fetchMessages = async (conversationID: String) => {
+export const fetchMessages = async (conversationID: Number) => {
     const response = await apiClient.post('/chat_messages', {message_id: conversationID});
     return response.data.data.messages;
 };
@@ -80,9 +89,25 @@ export const fetchConversations = async () => {
 /**
  * 更新会话名称
  */
-export const updateConversationName = async (conversationID: String, name: String, model: String, prompt: String) => {
+export const updateConversationName = async (conversationID: Number, name: String, model: String, prompt: String) => {
     await apiClient.post('/chat_conversations/update', {id: conversationID, name: name, model, prompt});
     return;
+}
+
+/**
+ * 删除会话
+ */
+export const deleteConversation = async (conversationID: Number) => {
+    const response = await apiClient.post('/chat_conversations/delete', {id: conversationID});
+    return response;
+}
+
+/**
+ * 删除所有会话
+ */
+export const clearAllConversations = async () => {
+    const response = await apiClient.post('/chat_conversations/clear_all');
+    return response.data.status;
 }
 
 export default handler;

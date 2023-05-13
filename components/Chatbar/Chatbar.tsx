@@ -138,21 +138,21 @@ export const Chatbar: FC<Props> = ({
                     {t('New chat')}
                 </button>
 
-                <button
-                    className="ml-2 flex flex-shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-[14px] leading-normal text-white transition-colors duration-200 hover:bg-gray-500/10"
-                    onClick={() => onCreateFolder(t('New folder'))}
-                >
-                    <IconFolderPlus size={18}/>
-                </button>
+                {/*<button*/}
+                {/*    className="ml-2 flex flex-shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-[14px] leading-normal text-white transition-colors duration-200 hover:bg-gray-500/10"*/}
+                {/*    onClick={() => onCreateFolder(t('New folder'))}*/}
+                {/*>*/}
+                {/*    <IconFolderPlus size={18}/>*/}
+                {/*</button>*/}
             </div>
 
-            {conversations.length > 1 && (
-                <Search
-                    placeholder="Search conversations..."
-                    searchTerm={searchTerm}
-                    onSearch={setSearchTerm}
-                />
-            )}
+            {/*{conversations.length > 1 && (*/}
+            {/*    <Search*/}
+            {/*        placeholder="Search conversations..."*/}
+            {/*        searchTerm={searchTerm}*/}
+            {/*        onSearch={setSearchTerm}*/}
+            {/*    />*/}
+            {/*)}*/}
 
             <div className="flex-grow overflow-auto">
                 {folders.length > 0 && (
