@@ -54,7 +54,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({
-                                       serverSideApiKeyIsSet,
+                                       serverSideApiKeyIsSet= true,
                                        serverSidePluginKeysSet,
                                        defaultModelId,
                                    }) => {
