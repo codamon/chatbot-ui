@@ -33,6 +33,7 @@ spec:
       containers:
         - name: app
           image: xebnisoftware/chatbot:${CICD_GIT_BRANCH}.${CICD_EXECUTION_SEQUENCE}
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
             - containerPort: 3000
