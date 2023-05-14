@@ -1,17 +1,16 @@
 import {Chat} from '@/components/Chat/Chat';
 import {Chatbar} from '@/components/Chatbar/Chatbar';
 import {Navbar} from '@/components/Mobile/Navbar';
-import {Promptbar} from '@/components/Promptbar/Promptbar';
 import {ChatBody, Conversation, Message} from '@/types/chat';
 import {KeyValuePair} from '@/types/data';
 import {ErrorMessage} from '@/types/error';
 import {LatestExportFormat, SupportedExportFormats} from '@/types/export';
 import {Folder, FolderType} from '@/types/folder';
 import {
+    fallbackModelID,
     OpenAIModel,
     OpenAIModelID,
     OpenAIModels,
-    fallbackModelID,
 } from '@/types/openai';
 import {Plugin, PluginKey} from '@/types/plugin';
 import {Prompt} from '@/types/prompt';
@@ -40,13 +39,13 @@ import {v4 as uuidv4} from 'uuid';
 import {useRouter} from "next/router";
 import apiClient from "@/utils/app/apiClient";
 import {
-    fetchMessages,
+    clearAllConversations,
+    createConversation,
+    deleteConversation,
     fetchConversations,
-    updateConversationName,
-    createConversation, deleteConversation, clearAllConversations
+    fetchMessages,
+    updateConversationName
 } from "@/pages/api/chat";
-import axios from "axios/index";
-import {an} from "vitest/dist/types-94cfe4b4";
 
 interface HomeProps {
     serverSideApiKeyIsSet: boolean;
