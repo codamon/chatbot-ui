@@ -7,7 +7,11 @@ module.exports = {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'btn-green': '#10A37F',
+      },
+    },
   },
   variants: {
     extend: {
