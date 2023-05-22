@@ -39,6 +39,8 @@ interface Props {
     onPluginKeyChange: (pluginKey: PluginKey) => void;
     onClearPluginKey: (pluginKey: PluginKey) => void;
     onLogout: () => void;
+    onCopyInvitationCode: () => void;
+    invitationCode: string;
 }
 
 export const Chatbar: FC<Props> = ({
@@ -66,6 +68,8 @@ export const Chatbar: FC<Props> = ({
                                        onPluginKeyChange,
                                        onClearPluginKey,
                                        onLogout,
+                                       onCopyInvitationCode,
+                                       invitationCode,
                                    }) => {
     const {t} = useTranslation('sidebar');
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -217,6 +221,8 @@ export const Chatbar: FC<Props> = ({
                 onPluginKeyChange={onPluginKeyChange}
                 onClearPluginKey={onClearPluginKey}
                 onLogout={onLogout}
+                onCopyInvitationCode={onCopyInvitationCode}
+                invitationCode={invitationCode}
             />
         </div>
     );

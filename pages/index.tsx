@@ -84,6 +84,7 @@ const Home: React.FC<HomeProps> = ({
 
     const [prompts, setPrompts] = useState<Prompt[]>([]);
     const [showPromptbar, setShowPromptbar] = useState<boolean>(true);
+    const [invitationCode, setInvitationCode] = useState<string>('');
 
     // REFS ----------------------------------------------
 
@@ -474,6 +475,10 @@ const Home: React.FC<HomeProps> = ({
 
         // 跳转到登录页面
         router.push('/login');
+    }
+
+    const handleCopyInvitationCode = () => {
+        navigator.clipboard.writeText(invitationCode);
     }
 
     const handleToggleChatbar = () => {
@@ -959,7 +964,14 @@ const Home: React.FC<HomeProps> = ({
                 folderId: null,
             });
         }
+
+
+        // 读取邀请码
+        const invitationCode = localStorage.getItem('invitation_code') || '';
+        setInvitationCode((invitationCode || '').toUpperCase());
+
     }, [serverSideApiKeyIsSet]);
+
 
     return (
         <>
@@ -1011,6 +1023,8 @@ const Home: React.FC<HomeProps> = ({
                                     onPluginKeyChange={handlePluginKeyChange}
                                     onClearPluginKey={handleClearPluginKey}
                                     onLogout={onLogout}
+                                    onCopyInvitationCode={handleCopyInvitationCode}
+                                    invitationCode={invitationCode}
                                 />
 
                                 <button

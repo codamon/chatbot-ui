@@ -7,6 +7,7 @@ export const loginWithEmail = async (email: string, password: string, remember: 
 
   const response = await apiClient.post('/auth/login', { email, password, remember });
   localStorage.setItem('access_token', response.data.access_token);
+  localStorage.setItem('invitation_code', response.data.invitation_code);
   return response.data.data;
 };
 

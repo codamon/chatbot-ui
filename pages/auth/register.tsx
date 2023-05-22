@@ -4,6 +4,7 @@ import {loginWithEmail, registerWithEmail} from "../api/auth";
 import chatGPTLogo from "../../public/chatgpt.jpeg";
 import Image from "next/image";
 import ReCAPTCHA from "react-google-recaptcha";
+import Link from "next/link";
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -195,7 +196,7 @@ const LoginPage = () => {
                                         type="text"
                                         value={inviteCode}
                                         onChange={handleInviteCodeChange}
-                                        placeholder="邀请码"
+                                        placeholder="邀请码(可选)"
                                         className={`border ${isValidInviteCode ? 'border-gray-200' : 'border-red-500'} h-10 p-3 rounded-sm-sm mt-1 focus:outline-none focus:border-blue-500 mr-4`}
                                     />
                                     {!isValidInviteCode && <span
@@ -213,6 +214,9 @@ const LoginPage = () => {
                                 onChange={handleRecaptcha}
                                 size={'compact'}
                             />
+                            <div className="flex items-center justify-center mt-4">
+                                <Link href={"/login"} className="text-sm text-blue-600 hover:text-blue-500">已经有账号？点击登录</Link>
+                            </div>
                         </form>
                     </div>
                 </div>
